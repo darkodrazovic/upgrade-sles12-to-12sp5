@@ -1,0 +1,9 @@
+- hosts: Upgrade SLES 12 to SLES 12SP5
+  become: yes
+  become_user: root
+  become_method: sudo
+  gather_facts: true
+  ignore_errors: no
+  
+  roles:
+    - upgrade-sles12-to-12sp5

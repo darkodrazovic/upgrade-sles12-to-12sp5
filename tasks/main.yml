@@ -1,0 +1,80 @@
+- name: Exit if host is not SUSE12
+  debug:
+    msg: "{{ ansible_distribution }} {{ ansible_distribution_version }} is not supported OS for this play"
+  when: not ( ansible_os_family == 'Suse' and ( ansible_distribution_major_version|int == 12 ))
+  failed_when: true
+  ignore_errors: false
+
+- name: SUSE clients migration to ZYPPER mirror
+  block:
+    - name: Check does /usr have more than 1000MB of available space
+      shell: df -Pm /usr | awk 'FNR == 2 {print ($4+1)}'
+      register: df_usr
+      failed_when: df_usr.stdout|int < 1000
+      ignore_errors: false
+      changed_when: False
+    - name: Check is system already subscribed to SUSE repo
+      shell: zypper lr -u | grep '{{ zypper_mirror_url }}' | grep -c '| Yes'
+      register: substatus
+      failed_when: false
+      ignore_errors: false
+      changed_when: false
+    - name: Report to user about zypper mirror status
+      assert:
+        that: substatus.stdout|int >= 6
+        success_msg: "Machine is subscribed to SUSE repo, starting with upgrade..."
+        fail_msg: "Machine is not subscribed to SUSE, aborting..."
+      ignore_errors: false
+  when: ansible_os_family == "Suse"
+  tags: MOVE_TO_ZYPPER_MIRROR
+
+- name: Migration from SP1 to SP2
+  block:
+    - name: Upgrade to SP2
+      command: zypper migration --migration 4 --allow-vendor-change --non-interactive --auto-agree-with-licenses
+      ignore_errors: false
+    - name: Reboot after upgrade to SP2
+      reboot:
+    - name: Regather facts after upgrade to SP2
+      setup:
+  when: ansible_distribution_version == "12.1"
+  tags: MIGRATION
+
+- name: Migration from SP2 to SP3
+  block:
+    - name: Upgrade to SP3
+      command: zypper migration --migration 3 --allow-vendor-change --non-interactive --auto-agree-with-licenses
+      ignore_errors: false
+    - name: Reboot after upgrade to SP3
+      reboot:
+    - name: Regather facts after upgrade to SP3
+      setup:
+  when: ansible_distribution_version == "12.2"
+  tags: MIGRATION
+
+- name: Migration from SP3 to SP4
+  block:
+    - name: Upgrade to SP4
+      command: zypper migration --migration 2 --allow-vendor-change --non-interactive --auto-agree-with-licenses
+      ignore_errors: false
+    - name: Reboot after upgrade to SP4
+      reboot:
+    - name: Regather facts after upgrade to SP4
+      setup:
+  when: ansible_distribution_version == "12.3"
+  tags: MIGRATION
+
+- name: Migration from SP4 to SP5
+  block:
+    - name: Upgrade to SP5
+      command: zypper migration --migration 1 --allow-vendor-change --non-interactive --auto-agree-with-licenses
+      ignore_errors: false
+    - name: Reboot after upgrade to SP5
+      reboot:
+    - name: Regather facts after upgrade to SP5
+      setup:
+  when: ansible_distribution_version == "12.4"
+  tags: MIGRATION
+
+- name: Get report about current version of SLES
+  debug: msg="Current SLES version --> {{ ansible_distribution_version }}"

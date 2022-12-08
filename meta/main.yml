@@ -1,0 +1,15 @@
+galaxy_info:
+  author: Darko Drazovic
+  description: Playbook for SLES 12 upgrade from SP1 (or SP2, or SP3, or SP4) to SP5.
+
+  license: GPL-3.0-or-later
+
+  min_ansible_version: 2.7
+
+  platforms:
+  - name: SLES
+    versions:
+      - 12
+
+  galaxy_tags:
+    - sles
